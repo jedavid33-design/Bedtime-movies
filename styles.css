@@ -18,7 +18,7 @@ body {
     radial-gradient(circle at bottom right, #e7edff, transparent 38%),
     var(--bg);
 }
-.app { width: min(760px, 100%); margin: 0 auto; padding: 28px 18px 44px; }
+.app { width: min(760px, 100%); margin: 0 auto; padding: 16px 12px 32px; }
 header { text-align: center; padding: 10px 0 18px; }
 .badge { display: inline-block; padding: 12px 18px; border-radius: 22px; background: rgba(255,255,255,.75); color: var(--accent); font-size: 1.25rem; font-weight: 800; box-shadow: var(--shadow); }
 h1 { margin: 20px 0 6px; font-size: clamp(2.1rem, 8vw, 4rem); line-height: 1.02; }
@@ -46,4 +46,59 @@ input { border: 0; border-radius: 999px; padding: 14px 18px; font: inherit; back
 dialog { border: 0; border-radius: 24px; padding: 22px; box-shadow: var(--shadow); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .danger { background: var(--accent); color: white; }
-@media (max-width: 520px) { .actions { grid-template-columns: 1fr; } .movie-row { grid-template-columns: 1fr auto; } .remove { grid-column: 1 / -1; } }
+@media (max-width: 520px) {
+  .app {
+    width: 100%;
+    padding: 10px 8px 24px;
+  }
+
+  header {
+    padding: 6px 0 8px;
+  }
+
+  .badge {
+    padding: 9px 14px;
+    border-radius: 18px;
+    font-size: 1rem;
+  }
+
+  h1 {
+    margin: 10px 0 4px;
+    font-size: 2.4rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    max-width: 330px;
+    margin: 0 auto 8px;
+  }
+
+  .wheel-card {
+    padding: 12px 6px 16px;
+    border-radius: 28px;
+  }
+
+  canvas {
+    width: min(96vw, 430px);
+    height: min(96vw, 430px);
+  }
+
+  .pointer {
+    top: 6px;
+  }
+
+  .primary {
+    width: 82%;
+    min-width: 0;
+    font-size: 1.35rem;
+    padding: 16px 24px;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .movie-row {
+    grid-template-columns: 1fr auto auto;
+  }
+}
