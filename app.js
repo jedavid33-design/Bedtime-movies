@@ -123,7 +123,7 @@ function spin() {
 
   spinning = true;
   spinBtn.disabled = true;
-  watchedBtn.disabled = true;
+  if (watchedBtn) watchedBtn.disabled = true;
   winnerEl.textContent = "Spinning...";
 
   function animate(now) {
@@ -140,7 +140,7 @@ function spin() {
       rotation = targetRotation % (Math.PI * 2);
       winnerEl.textContent = movies[selectedIndex].title;
       spinBtn.disabled = false;
-      watchedBtn.disabled = false;
+      if (watchedBtn) watchedBtn.disabled = false;
       drawWheel();
     }
   }
