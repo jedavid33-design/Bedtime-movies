@@ -102,15 +102,25 @@ function segmentCenter(index) {
 
 function spin() {
   if (spinning || !movies.length) return;
+
   selectedIndex = weightedPick();
+
   const center = segmentCenter(selectedIndex);
   const pointerAngle = -Math.PI / 2;
-  const spins = Math.PI * 2 * 6;
-const targetRotation = pointerAngle - center + spins;
-const start = rotation;
-const change = targetRotation - start;
+  const normalizedRotation = rotation % (Math.PI * 2);
+  const desiredRotation = pointerAngle - center;
+
+  let change = desiredRotation - normalizedRotation;
+
+  while (change < 0) change += Math.PI * 2;
+
+  change += Math.PI * 2 * 6;
+
+  const start = rotation;
+  const targetRotation = start + change;
   const duration = 4300;
   const startTime = performance.now();
+
   spinning = true;
   spinBtn.disabled = true;
   watchedBtn.disabled = true;
@@ -119,10 +129,13 @@ const change = targetRotation - start;
   function animate(now) {
     const t = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(1 - t, 4);
+
     rotation = start + change * eased;
     drawWheel();
-    if (t < 1) requestAnimationFrame(animate);
-    else {
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
       spinning = false;
       rotation = targetRotation % (Math.PI * 2);
       winnerEl.textContent = movies[selectedIndex].title;
@@ -131,6 +144,7 @@ const change = targetRotation - start;
       drawWheel();
     }
   }
+
   requestAnimationFrame(animate);
 }
 
