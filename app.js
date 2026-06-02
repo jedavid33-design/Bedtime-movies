@@ -51,7 +51,7 @@ let spinning = false;
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
-const winnerEl = document.getElementById("winner");
+const winnerEl = document.getElementById("winner") || document.querySelector("header .subtitle");
 const spinBtn = document.getElementById("spinBtn");
 const watchedBtn = document.getElementById("watchedBtn");
 const undoBtn = document.getElementById("undoBtn");
