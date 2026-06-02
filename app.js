@@ -246,7 +246,7 @@ function escapeHtml(text) { return text.replace(/[&<>'"]/g, c => ({"&":"&amp;","
 function render() { drawWheel(); renderList(); }
 
 spinBtn.onclick = spin;
-watchedBtn.onclick = markWatched;
+if (watchedBtn) watchedBtn.onclick = markWatched;
 undoBtn.onclick = undo;
 resetBtn.onclick = () => dialog.showModal();
 document.getElementById("cancelReset").onclick = () => dialog.close();
