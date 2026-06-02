@@ -105,9 +105,10 @@ function spin() {
   selectedIndex = weightedPick();
   const center = segmentCenter(selectedIndex);
   const pointerAngle = -Math.PI / 2;
-  const targetRotation = pointerAngle - center + Math.PI * 2 * (5 + Math.floor(Math.random() * 3));
-  const start = rotation;
-  const change = targetRotation - start;
+  const spins = Math.PI * 2 * 6;
+const targetRotation = pointerAngle - center + spins;
+const start = rotation;
+const change = targetRotation - start;
   const duration = 4300;
   const startTime = performance.now();
   spinning = true;
