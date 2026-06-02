@@ -242,7 +242,15 @@ function renderList() {
     movieList.appendChild(row);
   });
 }
-function escapeHtml(text) { return text.replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+function escapeHtml(text) {
+  return text.replace(/[&<>'"]/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;"
+  }[c]));
+}
 function render() { drawWheel(); renderList(); }
 
 spinBtn.onclick = spin;
