@@ -86,7 +86,8 @@ dialog { border: 0; border-radius: 24px; padding: 22px; box-shadow: var(--shadow
     margin: 0 auto 8px;
   }
 #winner {
-  font-size: 1.6rem;
+  font-size: 2.3rem;
+  font-weight: 800;
 }
   .wheel-card {
     padding: 12px 6px 16px;
