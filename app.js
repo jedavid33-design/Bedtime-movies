@@ -227,7 +227,7 @@ function drawWheel() {
 function renderList() {
   movieList.innerHTML = "";
   const total = totalWeight();
-  totalSlices.textContent = `${total} slices`;
+totalSlices.textContent = `${movies.length} movies`;
   movies.forEach((movie, index) => {
     const row = document.createElement("div");
     row.className = "movie-row";
