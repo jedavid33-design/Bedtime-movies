@@ -41,13 +41,19 @@ const defaultMovies = [
   "Frozen Broadway"
 ];
 
-const colors = ["#a9c1b2", "#edd49f", "#e4ae99", "#e8bab0", "#a9a8c8", "#abc0d2", "#a4bdad", "#ebcf93", "#e9b3a0", "#c4b2dc"];
+const colors = ["#809fa3", "#a592ba", "#769aaa", "#b58f9f", "#9991b8", "#6f9c96", "#aa967d", "#8796bd", "#ab8ba9", "#719baf"];
 const storageKey = "bedtimeMovieWheel.v2";
+const lastSpinStorageKey = "bedtimeMovieWheel.lastSpin.v1";
 let movies = load();
 let lastState = null;
 let selectedIndex = null;
 let rotation = -Math.PI / 2;
 let spinning = false;
+let dragging = false;
+let dragPointerId = null;
+let lastDragAngle = 0;
+let lastDragTime = 0;
+let dragVelocity = 0;
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
@@ -82,6 +88,49 @@ function load() {
 function save() { localStorage.setItem(storageKey, JSON.stringify(movies)); }
 function totalWeight() { return movies.reduce((sum, m) => sum + m.weight, 0); }
 
+function loadLastSpin() {
+  try {
+    const saved = localStorage.getItem(lastSpinStorageKey);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    if (!parsed || typeof parsed.title !== "string") {
+      localStorage.removeItem(lastSpinStorageKey);
+      return null;
+    }
+
+    const exactIndex = Number.isInteger(parsed.index) && movies[parsed.index]?.title === parsed.title
+      ? parsed.index
+      : movies.findIndex(movie => movie.title === parsed.title);
+
+    if (exactIndex < 0) {
+      localStorage.removeItem(lastSpinStorageKey);
+      return null;
+    }
+
+    return {
+      index: exactIndex,
+      title: parsed.title,
+      rotation: Number.isFinite(parsed.rotation) ? parsed.rotation : -Math.PI / 2
+    };
+  } catch {
+    localStorage.removeItem(lastSpinStorageKey);
+    return null;
+  }
+}
+
+function saveLastSpin() {
+  if (selectedIndex == null || !movies[selectedIndex]) return;
+  localStorage.setItem(lastSpinStorageKey, JSON.stringify({
+    index: selectedIndex,
+    title: movies[selectedIndex].title,
+    rotation
+  }));
+}
+
+function clearLastSpin() {
+  localStorage.removeItem(lastSpinStorageKey);
+}
+
 function weightedPick() {
   const total = totalWeight();
   let r = Math.random() * total;
@@ -98,6 +147,51 @@ function segmentCenter(index) {
   for (let i = 0; i < index; i++) start += movies[i].weight / total * Math.PI * 2;
   const arc = movies[index].weight / total * Math.PI * 2;
   return start + arc / 2;
+}
+
+function normalizedAngle(angle) {
+  const fullTurn = Math.PI * 2;
+  return ((angle % fullTurn) + fullTurn) % fullTurn;
+}
+
+function shortestAngleChange(from, to) {
+  let change = to - from;
+  if (change > Math.PI) change -= Math.PI * 2;
+  if (change < -Math.PI) change += Math.PI * 2;
+  return change;
+}
+
+function pointerAngleForEvent(event) {
+  const bounds = canvas.getBoundingClientRect();
+  return Math.atan2(
+    event.clientY - (bounds.top + bounds.height / 2),
+    event.clientX - (bounds.left + bounds.width / 2)
+  );
+}
+
+function movieIndexAtPointer(wheelRotation = rotation) {
+  const pointerAngle = -Math.PI / 2;
+  const wheelAngle = normalizedAngle(pointerAngle - wheelRotation);
+  const total = totalWeight();
+  let end = 0;
+
+  for (let i = 0; i < movies.length; i++) {
+    end += movies[i].weight / total * Math.PI * 2;
+    if (wheelAngle < end) return i;
+  }
+
+  return movies.length - 1;
+}
+
+function finishSpin(index) {
+  if (index == null || !movies[index]) return;
+  selectedIndex = index;
+  spinning = false;
+  winnerEl.textContent = movies[index].title;
+  spinBtn.disabled = false;
+  if (watchedBtn) watchedBtn.disabled = false;
+  saveLastSpin();
+  drawWheel();
 }
 
 function spin() {
@@ -136,16 +230,71 @@ function spin() {
     if (t < 1) {
       requestAnimationFrame(animate);
     } else {
-      spinning = false;
       rotation = targetRotation % (Math.PI * 2);
-      winnerEl.textContent = movies[selectedIndex].title;
-      spinBtn.disabled = false;
-      if (watchedBtn) watchedBtn.disabled = false;
-      drawWheel();
+      finishSpin(selectedIndex);
     }
   }
 
   requestAnimationFrame(animate);
+}
+
+function beginManualSpin(event) {
+  if (spinning || !movies.length || (event.pointerType === "mouse" && event.button !== 0)) return;
+  dragging = true;
+  dragPointerId = event.pointerId;
+  lastDragAngle = pointerAngleForEvent(event);
+  lastDragTime = event.timeStamp;
+  dragVelocity = 0;
+  spinBtn.disabled = true;
+  if (watchedBtn) watchedBtn.disabled = true;
+  winnerEl.textContent = "Spin the wheel…";
+  canvas.classList.add("dragging");
+  canvas.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function moveManualSpin(event) {
+  if (!dragging || event.pointerId !== dragPointerId) return;
+  const angle = pointerAngleForEvent(event);
+  const change = shortestAngleChange(lastDragAngle, angle);
+  const elapsed = Math.max(1, event.timeStamp - lastDragTime);
+  rotation += change;
+  dragVelocity = dragVelocity * .55 + (change / elapsed) * .45;
+  lastDragAngle = angle;
+  lastDragTime = event.timeStamp;
+  drawWheel();
+  event.preventDefault();
+}
+
+function endManualSpin(event) {
+  if (!dragging || event.pointerId !== dragPointerId) return;
+  dragging = false;
+  dragPointerId = null;
+  canvas.classList.remove("dragging");
+  canvas.releasePointerCapture?.(event.pointerId);
+  event.preventDefault();
+
+  let velocity = Math.max(-.045, Math.min(.045, dragVelocity));
+  let previousTime = performance.now();
+  const startedAt = previousTime;
+  spinning = true;
+
+  function coast(now) {
+    const elapsed = Math.min(34, Math.max(1, now - previousTime));
+    previousTime = now;
+    rotation += velocity * elapsed;
+    velocity *= Math.pow(.94, elapsed / 16.67);
+    drawWheel();
+
+    if (Math.abs(velocity) > .00008 && now - startedAt < 2600) {
+      requestAnimationFrame(coast);
+    } else {
+      rotation = normalizedAngle(rotation);
+      finishSpin(movieIndexAtPointer(rotation));
+    }
+  }
+
+  requestAnimationFrame(coast);
 }
 
 function markWatched() {
@@ -153,6 +302,7 @@ function markWatched() {
   lastState = JSON.stringify(movies);
   movies = movies.map((m, i) => ({ ...m, weight: i === selectedIndex ? 1 : m.weight + 1 }));
   selectedIndex = null;
+  clearLastSpin();
   watchedBtn.disabled = true;
   save();
   render();
@@ -201,7 +351,7 @@ function drawWheel() {
       ctx.rotate(start + arc / 2);
       ctx.textAlign = "right";
       ctx.fillStyle = "rgba(255,255,255,.95)";
-      ctx.font = "700 18px system-ui, sans-serif";
+      ctx.font = '700 18px ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       const label = movie.title.length > 24 ? movie.title.slice(0, 23) + "…" : movie.title;
       ctx.fillText(label, radius - 18, 7);
       ctx.restore();
@@ -235,7 +385,17 @@ totalSlices.textContent = `${movies.length} movies`;
     row.innerHTML = `<div class="movie-title">${escapeHtml(movie.title)} <span class="tiny">${pct}%</span></div><div class="weight">${movie.weight}</div><button class="remove" aria-label="Remove ${escapeHtml(movie.title)}">Remove</button>`;
     row.querySelector(".remove").onclick = () => {
       lastState = JSON.stringify(movies);
+      const removedSelectedMovie = index === selectedIndex;
       movies.splice(index, 1);
+      if (removedSelectedMovie) {
+        selectedIndex = null;
+        winnerEl.textContent = "Tap Spin";
+        if (watchedBtn) watchedBtn.disabled = true;
+        clearLastSpin();
+      } else if (selectedIndex != null && index < selectedIndex) {
+        selectedIndex -= 1;
+        saveLastSpin();
+      }
       save();
       render();
     };
@@ -262,6 +422,7 @@ document.getElementById("confirmReset").onclick = () => {
   lastState = JSON.stringify(movies);
   movies = freshDefaults();
   selectedIndex = null;
+  clearLastSpin();
   winnerEl.textContent = "Reset";
   watchedBtn.disabled = true;
   save();
@@ -278,5 +439,17 @@ addBtn.onclick = () => {
   render();
 };
 newMovie.addEventListener("keydown", e => { if (e.key === "Enter") addBtn.click(); });
+canvas.addEventListener("pointerdown", beginManualSpin);
+canvas.addEventListener("pointermove", moveManualSpin);
+canvas.addEventListener("pointerup", endManualSpin);
+canvas.addEventListener("pointercancel", endManualSpin);
+
+const restoredSpin = loadLastSpin();
+if (restoredSpin) {
+  selectedIndex = restoredSpin.index;
+  rotation = restoredSpin.rotation;
+  winnerEl.textContent = restoredSpin.title;
+  if (watchedBtn) watchedBtn.disabled = false;
+}
 
 render();

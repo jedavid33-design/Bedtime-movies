@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eeeaf5" />
   <title>Bedtime Movie Wheel</title>
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
   <link rel="apple-touch-icon" href="icon.PNG?v=1">
 <link rel="icon" type="image/png" href="icon.PNG?v=1">
 </head>
@@ -12,7 +13,7 @@
   <main class="app">
     <header>
       <div class="badge">🎥 Bedtime Movie</div>
-      <p id="winner" class="subtitle">
+      <p id="winner" class="subtitle" role="status" aria-live="polite">
   Tap Spin
 </p>
       <p class="subtitle">Weighted by how long it’s been since each movie won.</p>
@@ -20,8 +21,9 @@
 
     <section class="wheel-card">
       <div class="pointer"></div>
-      <canvas id="wheel" width="680" height="680" aria-label="Movie wheel"></canvas>
+      <canvas id="wheel" width="680" height="680" aria-label="Movie wheel. Drag with your finger to spin manually."></canvas>
       <button id="spinBtn" class="primary">Spin</button>
+      <p class="spin-hint">Tap Spin or drag the wheel</p>
     </section>
 
     <section class="actions">
@@ -56,6 +58,6 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
