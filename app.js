@@ -41,7 +41,7 @@ const defaultMovies = [
   "Frozen Broadway"
 ];
 
-const colors = ["#99b8bb", "#b4a4c7", "#8fb3c0", "#c4a3b1", "#aaa5c9", "#8bb4aa", "#b8a68d", "#9aa9cf", "#bda0bc", "#86afc0"];
+const colors = ["#b8dfe0", "#d8c6ea", "#c6d5f2", "#f0cbd8", "#d7d2ed", "#b8d9cf", "#ead6bd", "#c4d0eb", "#e0c5dc", "#b6d4e5"];
 const storageKey = "bedtimeMovieWheel.v2";
 const lastSpinStorageKey = "bedtimeMovieWheel.lastSpin.v1";
 let movies = load();
@@ -355,7 +355,7 @@ function drawWheel() {
       ctx.rotate(start + arc / 2);
       ctx.textAlign = "right";
       ctx.fillStyle = "#393346";
-      ctx.font = '600 18px "Avenir Next", Avenir, "Helvetica Neue", ui-rounded, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.font = '600 18px Quicksand, "Avenir Next", ui-rounded, -apple-system, sans-serif';
       const label = movie.title.length > 24 ? movie.title.slice(0, 23) + "…" : movie.title;
       ctx.fillText(label, radius - 18, 7);
       ctx.restore();
@@ -486,3 +486,4 @@ if (restoredSpin) {
 }
 
 render();
+document.fonts?.ready.then(drawWheel);
