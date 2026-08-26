@@ -1,12 +1,12 @@
 :root {
-  --bg: #eeeaf5;
-  --glass: rgba(255, 255, 255, .62);
-  --glass-strong: rgba(255, 255, 255, .78);
+  --bg: #e8ecef;
+  --glass: rgba(250, 250, 252, .5);
+  --glass-strong: rgba(255, 255, 255, .68);
   --ink: #292538;
   --muted: #6e687d;
   --plum: #71658d;
   --plum-deep: #5d5279;
-  --line: rgba(255, 255, 255, .72);
+  --line: rgba(255, 255, 255, .82);
   --soft-line: rgba(90, 78, 116, .13);
   --shadow: 0 18px 44px rgba(66, 55, 91, .11), inset 0 1px 0 rgba(255, 255, 255, .7);
   --font-rounded: ui-rounded, "SF Pro Rounded", "Avenir Next Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -20,11 +20,13 @@ body {
   font-family: var(--font-rounded);
   color: var(--ink);
   background:
-    radial-gradient(circle at 8% 4%, rgba(191, 205, 234, .82), transparent 34%),
-    radial-gradient(circle at 92% 12%, rgba(218, 190, 211, .7), transparent 32%),
-    radial-gradient(circle at 18% 88%, rgba(179, 219, 211, .68), transparent 36%),
-    radial-gradient(circle at 88% 92%, rgba(232, 211, 179, .62), transparent 34%),
-    linear-gradient(145deg, #f0edf6, #e8eef2 48%, #f2ebf1);
+    radial-gradient(ellipse at -8% 4%, rgba(174, 208, 215, .86) 0, transparent 34%),
+    radial-gradient(ellipse at 82% -6%, rgba(207, 190, 226, .84) 0, transparent 34%),
+    radial-gradient(ellipse at 106% 34%, rgba(231, 194, 207, .72) 0, transparent 32%),
+    radial-gradient(ellipse at -4% 58%, rgba(191, 217, 203, .76) 0, transparent 34%),
+    radial-gradient(ellipse at 78% 72%, rgba(237, 215, 179, .68) 0, transparent 35%),
+    radial-gradient(ellipse at 22% 98%, rgba(190, 193, 225, .78) 0, transparent 36%),
+    linear-gradient(145deg, #edf2f1, #e7eaf1 48%, #f1ebef);
   background-attachment: fixed;
 }
 
@@ -69,7 +71,11 @@ header { text-align: center; padding: 6px 0 12px; }
 .wheel-card, .list-card, .edit-card {
   border: 1px solid var(--line);
   border-radius: 32px;
-  background: var(--glass);
+  background:
+    radial-gradient(ellipse at 5% 8%, rgba(190, 220, 218, .28), transparent 34%),
+    radial-gradient(ellipse at 94% 14%, rgba(216, 195, 225, .3), transparent 34%),
+    radial-gradient(ellipse at 78% 94%, rgba(239, 216, 181, .25), transparent 36%),
+    linear-gradient(145deg, rgba(255, 255, 255, .68), rgba(246, 244, 250, .44));
   box-shadow: var(--shadow);
   backdrop-filter: blur(24px) saturate(125%);
   -webkit-backdrop-filter: blur(24px) saturate(125%);
@@ -84,9 +90,17 @@ header { text-align: center; padding: 6px 0 12px; }
   overflow: hidden;
 }
 
+.wheel-stage {
+  position: relative;
+  width: min(100%, 620px);
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
 canvas {
-  width: min(92vw, 620px);
-  height: min(92vw, 620px);
+  display: block;
+  width: 100%;
+  height: 100%;
   filter: drop-shadow(0 12px 18px rgba(48, 42, 67, .13));
   cursor: grab;
   touch-action: none;
@@ -98,7 +112,7 @@ canvas.dragging { cursor: grabbing; }
 
 .pointer {
   position: absolute;
-  top: 13px;
+  top: 0;
   left: 50%;
   z-index: 3;
   width: 0;
@@ -115,7 +129,10 @@ button {
   border-radius: 999px;
   padding: 13px 20px;
   color: var(--ink);
-  background: var(--glass-strong);
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(203, 226, 222, .32), transparent 44%),
+    radial-gradient(ellipse at 88% 90%, rgba(216, 202, 231, .28), transparent 46%),
+    var(--glass-strong);
   box-shadow: 0 7px 18px rgba(66, 55, 91, .09), inset 0 1px 0 rgba(255, 255, 255, .85);
   font-size: 1rem;
   font-weight: 740;
@@ -209,8 +226,8 @@ dialog::backdrop { background: rgba(47, 40, 59, .24); backdrop-filter: blur(5px)
   #winner { max-width: 350px; font-size: clamp(2rem, 9vw, 2.7rem); }
   header > .subtitle:last-child { max-width: 340px; margin: 0 auto 5px; font-size: .94rem; }
   .wheel-card { padding: 11px 5px 15px; border-radius: 27px; }
-  canvas { width: min(96vw, 430px); height: min(96vw, 430px); }
-  .pointer { top: 5px; }
+  .wheel-stage { width: min(100%, 430px); }
+  .pointer { top: 0; }
   .primary { width: 82%; min-width: 0; padding: 15px 24px; font-size: 1.28rem; }
   .actions { grid-template-columns: 1fr; }
   .movie-row { grid-template-columns: 1fr auto auto; }

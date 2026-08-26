@@ -41,7 +41,7 @@ const defaultMovies = [
   "Frozen Broadway"
 ];
 
-const colors = ["#809fa3", "#a592ba", "#769aaa", "#b58f9f", "#9991b8", "#6f9c96", "#aa967d", "#8796bd", "#ab8ba9", "#719baf"];
+const colors = ["#99b8bb", "#b4a4c7", "#8fb3c0", "#c4a3b1", "#aaa5c9", "#8bb4aa", "#b8a68d", "#9aa9cf", "#bda0bc", "#86afc0"];
 const storageKey = "bedtimeMovieWheel.v2";
 const lastSpinStorageKey = "bedtimeMovieWheel.lastSpin.v1";
 let movies = load();
@@ -188,6 +188,7 @@ function finishSpin(index) {
   selectedIndex = index;
   spinning = false;
   winnerEl.textContent = movies[index].title;
+  winnerEl.setAttribute?.("aria-live", "polite");
   spinBtn.disabled = false;
   if (watchedBtn) watchedBtn.disabled = false;
   saveLastSpin();
@@ -247,7 +248,8 @@ function beginManualSpin(event) {
   dragVelocity = 0;
   spinBtn.disabled = true;
   if (watchedBtn) watchedBtn.disabled = true;
-  winnerEl.textContent = "Spin the wheel…";
+  winnerEl.setAttribute?.("aria-live", "off");
+  winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
   canvas.classList.add("dragging");
   canvas.setPointerCapture?.(event.pointerId);
   event.preventDefault();
@@ -260,6 +262,7 @@ function moveManualSpin(event) {
   const elapsed = Math.max(1, event.timeStamp - lastDragTime);
   rotation += change;
   dragVelocity = dragVelocity * .55 + (change / elapsed) * .45;
+  winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
   lastDragAngle = angle;
   lastDragTime = event.timeStamp;
   drawWheel();
@@ -284,6 +287,7 @@ function endManualSpin(event) {
     previousTime = now;
     rotation += velocity * elapsed;
     velocity *= Math.pow(.94, elapsed / 16.67);
+    winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
     drawWheel();
 
     if (Math.abs(velocity) > .00008 && now - startedAt < 2600) {
@@ -350,7 +354,7 @@ function drawWheel() {
       ctx.translate(cx, cy);
       ctx.rotate(start + arc / 2);
       ctx.textAlign = "right";
-      ctx.fillStyle = "rgba(255,255,255,.95)";
+      ctx.fillStyle = "#393346";
       ctx.font = '700 18px ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       const label = movie.title.length > 24 ? movie.title.slice(0, 23) + "…" : movie.title;
       ctx.fillText(label, radius - 18, 7);
@@ -360,9 +364,38 @@ function drawWheel() {
   });
   ctx.restore();
 
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.clip();
+  const sheen = ctx.createRadialGradient(
+    size * .28, size * .22, size * .03,
+    size * .52, size * .52, radius
+  );
+  sheen.addColorStop(0, "rgba(255,255,255,.34)");
+  sheen.addColorStop(.34, "rgba(255,255,255,.09)");
+  sheen.addColorStop(.72, "rgba(231,225,243,.04)");
+  sheen.addColorStop(1, "rgba(74,65,97,.13)");
+  ctx.fillStyle = sheen;
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "rgba(255,255,255,.72)";
+  ctx.stroke();
+
   ctx.beginPath();
   ctx.arc(cx, cy, size * .13, 0, Math.PI * 2);
-  ctx.fillStyle = "white";
+  const hub = ctx.createRadialGradient(
+    cx - size * .035, cy - size * .045, size * .01,
+    cx, cy, size * .13
+  );
+  hub.addColorStop(0, "rgba(255,255,255,.98)");
+  hub.addColorStop(.55, "rgba(248,246,250,.94)");
+  hub.addColorStop(1, "rgba(225,223,235,.94)");
+  ctx.fillStyle = hub;
   ctx.fill();
   ctx.lineWidth = 12;
   ctx.strokeStyle = "#ddd9df";

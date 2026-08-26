@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eeeaf5" />
   <title>Bedtime Movie Wheel</title>
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
   <link rel="apple-touch-icon" href="icon.PNG?v=1">
 <link rel="icon" type="image/png" href="icon.PNG?v=1">
 </head>
@@ -20,8 +20,10 @@
     </header>
 
     <section class="wheel-card">
-      <div class="pointer"></div>
-      <canvas id="wheel" width="680" height="680" aria-label="Movie wheel. Drag with your finger to spin manually."></canvas>
+      <div class="wheel-stage">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="680" height="680" aria-label="Movie wheel. Drag with your finger to spin manually."></canvas>
+      </div>
       <button id="spinBtn" class="primary">Spin</button>
       <p class="spin-hint">Tap Spin or drag the wheel</p>
     </section>
@@ -58,6 +60,6 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
