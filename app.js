@@ -49,11 +49,6 @@ let lastState = null;
 let selectedIndex = null;
 let rotation = -Math.PI / 2;
 let spinning = false;
-let dragging = false;
-let dragPointerId = null;
-let lastDragAngle = 0;
-let lastDragTime = 0;
-let dragVelocity = 0;
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
@@ -154,21 +149,6 @@ function normalizedAngle(angle) {
   return ((angle % fullTurn) + fullTurn) % fullTurn;
 }
 
-function shortestAngleChange(from, to) {
-  let change = to - from;
-  if (change > Math.PI) change -= Math.PI * 2;
-  if (change < -Math.PI) change += Math.PI * 2;
-  return change;
-}
-
-function pointerAngleForEvent(event) {
-  const bounds = canvas.getBoundingClientRect();
-  return Math.atan2(
-    event.clientY - (bounds.top + bounds.height / 2),
-    event.clientX - (bounds.left + bounds.width / 2)
-  );
-}
-
 function movieIndexAtPointer(wheelRotation = rotation) {
   const pointerAngle = -Math.PI / 2;
   const wheelAngle = normalizedAngle(pointerAngle - wheelRotation);
@@ -237,68 +217,6 @@ function spin() {
   }
 
   requestAnimationFrame(animate);
-}
-
-function beginManualSpin(event) {
-  if (spinning || !movies.length || (event.pointerType === "mouse" && event.button !== 0)) return;
-  dragging = true;
-  dragPointerId = event.pointerId;
-  lastDragAngle = pointerAngleForEvent(event);
-  lastDragTime = event.timeStamp;
-  dragVelocity = 0;
-  spinBtn.disabled = true;
-  if (watchedBtn) watchedBtn.disabled = true;
-  winnerEl.setAttribute?.("aria-live", "off");
-  winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
-  canvas.classList.add("dragging");
-  canvas.setPointerCapture?.(event.pointerId);
-  event.preventDefault();
-}
-
-function moveManualSpin(event) {
-  if (!dragging || event.pointerId !== dragPointerId) return;
-  const angle = pointerAngleForEvent(event);
-  const change = shortestAngleChange(lastDragAngle, angle);
-  const elapsed = Math.max(1, event.timeStamp - lastDragTime);
-  rotation += change;
-  dragVelocity = dragVelocity * .55 + (change / elapsed) * .45;
-  winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
-  lastDragAngle = angle;
-  lastDragTime = event.timeStamp;
-  drawWheel();
-  event.preventDefault();
-}
-
-function endManualSpin(event) {
-  if (!dragging || event.pointerId !== dragPointerId) return;
-  dragging = false;
-  dragPointerId = null;
-  canvas.classList.remove("dragging");
-  canvas.releasePointerCapture?.(event.pointerId);
-  event.preventDefault();
-
-  let velocity = Math.max(-.045, Math.min(.045, dragVelocity));
-  let previousTime = performance.now();
-  const startedAt = previousTime;
-  spinning = true;
-
-  function coast(now) {
-    const elapsed = Math.min(34, Math.max(1, now - previousTime));
-    previousTime = now;
-    rotation += velocity * elapsed;
-    velocity *= Math.pow(.94, elapsed / 16.67);
-    winnerEl.textContent = movies[movieIndexAtPointer(rotation)].title;
-    drawWheel();
-
-    if (Math.abs(velocity) > .00008 && now - startedAt < 2600) {
-      requestAnimationFrame(coast);
-    } else {
-      rotation = normalizedAngle(rotation);
-      finishSpin(movieIndexAtPointer(rotation));
-    }
-  }
-
-  requestAnimationFrame(coast);
 }
 
 function markWatched() {
@@ -473,10 +391,6 @@ addBtn.onclick = () => {
   render();
 };
 newMovie.addEventListener("keydown", e => { if (e.key === "Enter") addBtn.click(); });
-canvas.addEventListener("pointerdown", beginManualSpin);
-canvas.addEventListener("pointermove", moveManualSpin);
-canvas.addEventListener("pointerup", endManualSpin);
-canvas.addEventListener("pointercancel", endManualSpin);
 
 const restoredSpin = loadLastSpin();
 if (restoredSpin) {
