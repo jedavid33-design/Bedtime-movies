@@ -222,8 +222,8 @@ function spin() {
 function markWatched() {
   if (selectedIndex == null) return;
   lastState = JSON.stringify(movies);
-  // 5% increase multiplier on unwatched movies; the watched one resets to 1.
-  movies = movies.map((m, i) => ({ ...m, weight: i === selectedIndex ? 1 : m.weight * 1.05 }));
+  // 105% increase multiplier on unwatched movies; the watched one resets to 1.
+  movies = movies.map((m, i) => ({ ...m, weight: i === selectedIndex ? 1 : m.weight * 2.05 }));
   selectedIndex = null;
   clearLastSpin();
   watchedBtn.disabled = true;
