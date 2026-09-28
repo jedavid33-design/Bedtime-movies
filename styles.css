@@ -155,7 +155,9 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:hover:not(:disabled) { background: rgba(255, 255, 255, .92); }
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) { background: rgba(255, 255, 255, .92); }
+}
 button:active:not(:disabled) { transform: scale(.985); }
 button:focus-visible, input:focus-visible { outline: 3px solid rgba(113, 101, 141, .32); outline-offset: 2px; }
 button:disabled { opacity: .46; cursor: default; }
@@ -174,12 +176,6 @@ button:disabled { opacity: .46; cursor: default; }
 
 .primary:hover:not(:disabled) { filter: brightness(1.03); }
 
-.spin-hint {
-  margin: -7px 0 0;
-  color: var(--muted);
-  font-size: .88rem;
-  font-weight: 540;
-}
 
 .actions {
   display: grid;
