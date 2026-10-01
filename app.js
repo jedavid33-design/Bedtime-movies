@@ -67,20 +67,42 @@ function freshDefaults() {
   return defaultMovies.map(title => ({ title, weight: 1 }));
 }
 
-function load() {
-  try {
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) return freshDefaults();
-    const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed) || parsed.length === 0) return freshDefaults();
-    return parsed
-      .filter(item => item && typeof item.title === "string" && item.title.trim())
-      .map(item => ({ title: item.title.trim(), weight: Math.max(1, Number(item.weight) || 1) }));
-  } catch {
-    return freshDefaults();
-  }
+function parseMovieList(raw) {
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed) || parsed.length === 0) return null;
+  const list = parsed
+    .filter(item => item && typeof item.title === "string" && item.title.trim())
+    .map(item => ({ title: item.title.trim(), weight: Math.max(1, Number(item.weight) || 1) }));
+  return list.length ? list : null;
 }
-function save() { localStorage.setItem(storageKey, JSON.stringify(movies)); }
+
+function load() {
+  // Prefer v2; fall back to a v1 key from an older build before fresh defaults (A7).
+  const keys = [storageKey, "bedtimeMovieWheel.v1", "bedtimeMovieWheel"];
+  for (const key of keys) {
+    try {
+      const saved = localStorage.getItem(key);
+      if (!saved) continue;
+      const list = parseMovieList(saved);
+      if (list) return list;
+    } catch { /* corrupt value — try the next key */ }
+  }
+  return freshDefaults();
+}
+
+// Storage writes are guarded: in Safari private browsing (or on quota
+// exhaustion) setItem/removeItem can throw. A throw here must never freeze
+// the UI — the in-memory state is authoritative, so we note it once and move on (A4).
+let saveNoteShown = false;
+function flagUnsaved() {
+  if (saveNoteShown) return;
+  saveNoteShown = true;
+  winnerEl.textContent = (winnerEl.textContent || "Tap Spin") + " — couldn't save";
+}
+function save() {
+  try { localStorage.setItem(storageKey, JSON.stringify(movies)); }
+  catch { flagUnsaved(); }
+}
 function totalWeight() { return movies.reduce((sum, m) => sum + m.weight, 0); }
 
 function loadLastSpin() {
@@ -93,9 +115,11 @@ function loadLastSpin() {
       return null;
     }
 
+    // Strict match only: with duplicate titles a title-only fallback could
+    // restore the wrong duplicate's index, so a stale record is discarded (A6).
     const exactIndex = Number.isInteger(parsed.index) && movies[parsed.index]?.title === parsed.title
       ? parsed.index
-      : movies.findIndex(movie => movie.title === parsed.title);
+      : -1;
 
     if (exactIndex < 0) {
       localStorage.removeItem(lastSpinStorageKey);
@@ -115,15 +139,17 @@ function loadLastSpin() {
 
 function saveLastSpin() {
   if (selectedIndex == null || !movies[selectedIndex]) return;
-  localStorage.setItem(lastSpinStorageKey, JSON.stringify({
-    index: selectedIndex,
-    title: movies[selectedIndex].title,
-    rotation
-  }));
+  try {
+    localStorage.setItem(lastSpinStorageKey, JSON.stringify({
+      index: selectedIndex,
+      title: movies[selectedIndex].title,
+      rotation
+    }));
+  } catch { flagUnsaved(); }
 }
 
 function clearLastSpin() {
-  localStorage.removeItem(lastSpinStorageKey);
+  try { localStorage.removeItem(lastSpinStorageKey); } catch { /* nothing to do */ }
 }
 
 function weightedPick() {
@@ -363,7 +389,12 @@ function escapeHtml(text) {
     '"': "&quot;"
   }[c]));
 }
-function render() { drawWheel(); renderList(); }
+function render() {
+  drawWheel();
+  renderList();
+  // A live-but-dead Spin button is worse than a disabled one (A5).
+  spinBtn.disabled = spinning || movies.length === 0;
+}
 
 spinBtn.onclick = spin;
 if (watchedBtn) watchedBtn.onclick = markWatched;
@@ -371,6 +402,13 @@ undoBtn.onclick = undo;
 resetBtn.onclick = () => dialog.showModal();
 document.getElementById("cancelReset").onclick = () => dialog.close();
 document.getElementById("confirmReset").onclick = () => {
+  // Never reset mid-spin: the in-flight animation's finishSpin would early-
+  // return on the nulled selection and leave the Spin button dead (A1).
+  if (spinning) {
+    dialog.close();
+    winnerEl.textContent = "Wait for the spin to finish, then reset";
+    return;
+  }
   lastState = JSON.stringify(movies);
   movies = freshDefaults();
   selectedIndex = null;
