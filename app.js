@@ -44,6 +44,7 @@ const defaultMovies = [
 const colors = ["#b8dfe0", "#d8c6ea", "#c6d5f2", "#f0cbd8", "#d7d2ed", "#b8d9cf", "#ead6bd", "#c4d0eb", "#e0c5dc", "#b6d4e5"];
 const storageKey = "bedtimeMovieWheel.v2";
 const lastSpinStorageKey = "bedtimeMovieWheel.lastSpin.v1";
+const weightCurveMigrationKey = "bedtimeMovieWheel.weightCurve20.v1";
 let movies = load();
 let lastState = null;
 let selectedIndex = null;
@@ -103,6 +104,42 @@ function save() {
   try { localStorage.setItem(storageKey, JSON.stringify(movies)); }
   catch { flagUnsaved(); }
 }
+function bedtimeWeightForSkips(skips) {
+  const age = Math.max(0, Math.floor(Number(skips) || 0));
+  const incrementGrowth = 1.20;
+  if (age === 0) return 1;
+  return 1 + (Math.pow(incrementGrowth, age) - 1) / (incrementGrowth - 1);
+}
+
+function nextBedtimeWeight(currentWeight) {
+  // Same curve as DVR Wheel v0.2.67:
+  // +1.00, then each later increment is 20% larger (+1.20, +1.44, +1.728...).
+  // Because weight(n) = 5 * 1.2^n - 4, the recurrence is w' = 1.2w + 0.8.
+  const current = Math.max(1, Number(currentWeight) || 1);
+  return current * 1.20 + 0.80;
+}
+
+function migrateLegacyBedtimeWeights() {
+  try {
+    if (localStorage.getItem(weightCurveMigrationKey)) return;
+
+    // Preserve the approximate number of times each movie has been skipped under
+    // the old x2.05-per-watch system, but remap that history onto the gentler
+    // accelerating-increment curve instead of carrying giant legacy weights forward.
+    movies = movies.map(movie => {
+      const legacyWeight = Math.max(1, Number(movie.weight) || 1);
+      if (legacyWeight <= 1) return { ...movie, weight: 1 };
+      const inferredSkips = Math.max(1, Math.round(Math.log(legacyWeight) / Math.log(2.05)));
+      return { ...movie, weight: bedtimeWeightForSkips(inferredSkips) };
+    });
+
+    localStorage.setItem(storageKey, JSON.stringify(movies));
+    localStorage.setItem(weightCurveMigrationKey, "1");
+  } catch {
+    flagUnsaved();
+  }
+}
+
 function totalWeight() { return movies.reduce((sum, m) => sum + m.weight, 0); }
 
 function loadLastSpin() {
@@ -248,8 +285,12 @@ function spin() {
 function markWatched() {
   if (selectedIndex == null) return;
   lastState = JSON.stringify(movies);
-  // 105% increase multiplier on unwatched movies; the watched one resets to 1.
-  movies = movies.map((m, i) => ({ ...m, weight: i === selectedIndex ? 1 : m.weight * 2.05 }));
+  // Chosen movie resets to 1. Every movie that survives another bedtime gets
+  // the next increment in the 20%-accelerating sequence.
+  movies = movies.map((m, i) => ({
+    ...m,
+    weight: i === selectedIndex ? 1 : nextBedtimeWeight(m.weight)
+  }));
   selectedIndex = null;
   clearLastSpin();
   watchedBtn.disabled = true;
@@ -429,6 +470,8 @@ addBtn.onclick = () => {
   render();
 };
 newMovie.addEventListener("keydown", e => { if (e.key === "Enter") addBtn.click(); });
+
+migrateLegacyBedtimeWeights();
 
 const restoredSpin = loadLastSpin();
 if (restoredSpin) {
