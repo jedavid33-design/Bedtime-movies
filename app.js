@@ -58,6 +58,7 @@ const spinBtn = document.getElementById("spinBtn");
 const watchedBtn = document.getElementById("watchedBtn");
 const undoBtn = document.getElementById("undoBtn");
 const resetBtn = document.getElementById("resetBtn");
+const shuffleBtn = document.getElementById("shuffleBtn");
 const movieList = document.getElementById("movieList");
 const totalSlices = document.getElementById("totalSlices");
 const newMovie = document.getElementById("newMovie");
@@ -282,6 +283,34 @@ function spin() {
   requestAnimationFrame(animate);
 }
 
+function shuffleWheel() {
+  if (spinning || movies.length < 2) return;
+
+  lastState = JSON.stringify(movies);
+  const selectedMovie = selectedIndex != null ? movies[selectedIndex] : null;
+  const before = movies.slice();
+
+  for (let i = movies.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [movies[i], movies[j]] = [movies[j], movies[i]];
+  }
+
+  // A shuffle should visibly change the wheel even in the rare case that
+  // Fisher-Yates lands on the original order.
+  if (movies.every((movie, index) => movie === before[index])) {
+    movies.push(movies.shift());
+  }
+
+  if (selectedMovie) {
+    selectedIndex = movies.indexOf(selectedMovie);
+    rotation = normalizedAngle((-Math.PI / 2) - segmentCenter(selectedIndex));
+    saveLastSpin();
+  }
+
+  save();
+  render();
+}
+
 function markWatched() {
   if (selectedIndex == null) return;
   lastState = JSON.stringify(movies);
@@ -435,9 +464,11 @@ function render() {
   renderList();
   // A live-but-dead Spin button is worse than a disabled one (A5).
   spinBtn.disabled = spinning || movies.length === 0;
+  if (shuffleBtn) shuffleBtn.disabled = spinning || movies.length < 2;
 }
 
 spinBtn.onclick = spin;
+if (shuffleBtn) shuffleBtn.onclick = shuffleWheel;
 if (watchedBtn) watchedBtn.onclick = markWatched;
 undoBtn.onclick = undo;
 resetBtn.onclick = () => dialog.showModal();
