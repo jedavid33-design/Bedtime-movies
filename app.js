@@ -430,7 +430,7 @@ totalSlices.textContent = `${movies.length} movies`;
     const row = document.createElement("div");
     row.className = "movie-row";
     const pct = Math.round(movie.weight / total * 100);
-    row.innerHTML = `<div class="movie-title">${escapeHtml(movie.title)} <span class="tiny">${pct}%</span></div><div class="weight">${movie.weight}</div><button class="remove" aria-label="Remove ${escapeHtml(movie.title)}">Remove</button>`;
+    row.innerHTML = `<div class="movie-title">${escapeHtml(movie.title)} <span class="tiny">${pct}%</span></div><div class="weight">${Number(movie.weight).toFixed(1)}</div><button class="remove" aria-label="Remove ${escapeHtml(movie.title)}">Remove</button>`;
     row.querySelector(".remove").onclick = () => {
       lastState = JSON.stringify(movies);
       const removedSelectedMovie = index === selectedIndex;
